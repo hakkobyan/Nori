@@ -1,8 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-const PROJECT = process.env.GOOGLE_CLOUD_PROJECT;
-const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || "global";
-const MODEL = process.env.VERTEX_MODEL || "gemini-2.5-flash";
+export const runtime = "nodejs";
+
+const MODEL = process.env.GEMINI_MODEL || process.env.VERTEX_MODEL || "gemini-2.5-flash";
 
 function buildPromptContext(uploads) {
   if (!uploads?.length) {
@@ -21,12 +21,34 @@ function toVertexContents(history) {
   }));
 }
 
+function createAiClient() {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  const project = process.env.GOOGLE_CLOUD_PROJECT;
+  const location = process.env.GOOGLE_CLOUD_LOCATION || "global";
+
+  if (apiKey) {
+    return new GoogleGenAI({ apiKey });
+  }
+
+  if (project) {
+    return new GoogleGenAI({
+      vertexai: true,
+      project,
+      location,
+    });
+  }
+
+  return null;
+}
+
 export async function POST(request) {
-  if (!PROJECT) {
+  const ai = createAiClient();
+
+  if (!ai) {
     return Response.json(
       {
         error:
-          "Vertex AI is not configured yet. Set GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, and application default credentials.",
+          "AI is not configured. Set GEMINI_API_KEY on Vercel for the simplest setup, or provide GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION for Vertex AI.",
       },
       { status: 500 },
     );
@@ -38,12 +60,6 @@ export async function POST(request) {
     if (!message?.trim()) {
       return Response.json({ error: "Message is required." }, { status: 400 });
     }
-
-    const ai = new GoogleGenAI({
-      vertexai: true,
-      project: PROJECT,
-      location: LOCATION,
-    });
 
     const response = await ai.models.generateContent({
       model: MODEL,

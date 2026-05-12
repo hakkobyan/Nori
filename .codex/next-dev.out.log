@@ -6,3 +6,6 @@
 - Local:         http://localhost:3000
 - Network:       http://192.168.31.152:3000
 ✓ Ready in 11.8s
+Creating turbopack project { dir: 'D:\\nori', testMode: true }
+
+ GET / 200 in 1433ms (next.js: 831ms, application-code: 601ms)

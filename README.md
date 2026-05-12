@@ -1,24 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) app for researching study materials and chatting with an AI tutor.
 
 ## Getting Started
 
-First, run the development server:
+1. Add environment variables.
+
+For local development, create `.env.local` with:
+
+```bash
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+If you prefer Vertex AI instead of a Gemini API key, you can use:
+
+```bash
+GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+GOOGLE_CLOUD_LOCATION=global
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+2. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Vercel Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Add these environment variables in your Vercel project:
+
+```bash
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+That is the simplest production setup and does not require Google Cloud runtime credentials.
+
+If you want to use Vertex AI on Vercel instead, you will also need Google Cloud authentication in addition to:
+
+```bash
+GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+GOOGLE_CLOUD_LOCATION=global
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+## How It Works
+
+- The UI sends chat requests to `app/api/chat/route.js`.
+- The route reads server-side environment variables at runtime.
+- If `GEMINI_API_KEY` is set, the app uses the Gemini API directly.
+- If no API key is set but `GOOGLE_CLOUD_PROJECT` is present, the app falls back to Vertex AI.
 
 ## Learn More
 
