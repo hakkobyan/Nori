@@ -139,8 +139,11 @@ async function readJsonResponse(response) {
   try {
     return JSON.parse(rawText);
   } catch {
+    const preview = rawText.replace(/\s+/g, " ").trim().slice(0, 220);
     throw new Error(
-      `The AI server returned an unexpected response (${response.status} ${response.statusText}).`,
+      preview
+        ? `The AI server returned an unexpected response (${response.status} ${response.statusText}): ${preview}`
+        : `The AI server returned an unexpected response (${response.status} ${response.statusText}).`,
     );
   }
 }
