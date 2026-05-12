@@ -1,20 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./page.module.css";
 
-const sidebarItems = [
-  { label: "Home", icon: "\u2302", active: true },
-  { label: "History", icon: "\u25F7" },
-  { label: "Projects", icon: "\u25A1" },
-  { label: "Bookmarks", icon: "\u25AF" },
-  { label: "Templates", icon: "\u2318" },
-  { label: "Settings", icon: "\u2699" },
+const STORAGE_KEY = "nori-home-state";
+
+const primaryNavItems = [
+  { label: "Home", icon: "⌂", view: "home" },
+  { label: "Chat", icon: "◉", view: "chat" },
+];
+
+const secondaryNavItems = [
+  { label: "History", icon: "◷" },
+  { label: "Projects", icon: "□" },
+  { label: "Bookmarks", icon: "▯" },
+  { label: "Templates", icon: "⌘" },
+  { label: "Settings", icon: "⚙" },
 ];
 
 const materialTypes = [
-  { key: "document", label: "Text", icon: "/doc.png", alt: "Text document icon" },
+  { key: "text", label: "Text", icon: "/doc.png", alt: "Text document icon" },
   { key: "pdf", label: "PDF", icon: "/pdf.png", alt: "PDF document icon" },
   { key: "image", label: "Image", icon: "/image.png", alt: "Image file icon" },
   { key: "link", label: "Link", icon: "/link.png", alt: "Link icon" },
@@ -48,73 +54,43 @@ const steps = [
   {
     title: "Upload your content",
     description: "Add text, PDF, image or link",
-    icon: "\u21EA",
+    icon: "⇪",
   },
   {
     title: "AI researches",
     description: "It will analyze and gather key insights",
-    icon: "\u25D4",
+    icon: "◔",
   },
   {
     title: "Let's chat",
     description: "Ask questions and get answers",
-    icon: "\u25CC",
+    icon: "◌",
   },
-];
-
-const starterPrompts = [
-  "Give me the 5 key ideas from these materials.",
-  "Quiz me on the weak parts first.",
-  "Explain this like I'm a beginner.",
-  "Create a short study plan from these uploads.",
 ];
 
 const recentResearch = [
   { title: "The Future of AI.pdf", time: "Today, 9:41 AM", icon: "/pdf.png", alt: "PDF icon" },
   { title: "Mountain Landscape.jpg", time: "Today, 9:35 AM", icon: "/image.png", alt: "Image icon" },
-  { title: "Renewable energy is essential...", time: "Yesterday, 8:20 PM", icon: "/doc.png", alt: "Document icon" },
+  {
+    title: "Renewable energy is essential...",
+    time: "Yesterday, 8:20 PM",
+    icon: "/doc.png",
+    alt: "Document icon",
+  },
   { title: "https://example.com/article", time: "May 12, 2024", icon: "/link.png", alt: "Link icon" },
 ];
 
-const tutorMessages = [
-  {
-    id: "m1",
-    role: "assistant",
-    title: "Research ready",
-    text: "I've reviewed your uploads and turned them into one study workspace. The materials mostly focus on AI trends, visual references, and sustainability notes.",
-  },
-  {
-    id: "m2",
-    role: "assistant",
-    title: "What I noticed",
-    text: "There are three recurring themes: future impact, practical examples, and long-term risk. I can explain them simply, quiz you, or compare ideas across the files.",
-  },
-  {
-    id: "m3",
-    role: "user",
-    text: "Start by explaining the main idea in simple words.",
-  },
-  {
-    id: "m4",
-    role: "assistant",
-    title: "Simple explanation",
-    text: "At a high level, the materials say that powerful tools become useful only when people can apply them clearly. The big opportunity is not just the technology itself, but how it changes learning, work, and decision making.",
-  },
+const starterPrompts = [
+  "Summarize the key points.",
+  "Quiz me on this material.",
+  "Explain the hardest part simply.",
+  "Make a short study plan.",
 ];
 
 const coachCards = [
-  {
-    title: "Lesson mode",
-    text: "Walk through the material step by step like a tutor.",
-  },
-  {
-    title: "Quiz mode",
-    text: "Generate quick questions and check your answers.",
-  },
-  {
-    title: "Weak spots",
-    text: "Repeat difficult topics until they stick.",
-  },
+  { title: "Lesson mode", text: "Walk through the material step by step like a tutor." },
+  { title: "Quiz mode", text: "Generate quick questions and check your answers." },
+  { title: "Weak spots", text: "Repeat difficult topics until they stick." },
 ];
 
 function formatBytes(size) {
@@ -135,16 +111,71 @@ function buildFileUpload(file, icon, alt, label) {
   };
 }
 
+function readStoredState() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(STORAGE_KEY);
+
+    if (!rawValue) {
+      return null;
+    }
+
+    return JSON.parse(rawValue);
+  } catch {
+    return null;
+  }
+}
+
+function getInitialState() {
+  const storedState = readStoredState();
+
+  return {
+    uploads: storedState?.uploads?.length ? storedState.uploads : initialUploads,
+    composerType:
+      storedState?.composerType === "text" || storedState?.composerType === "link"
+        ? storedState.composerType
+        : null,
+    textDraft: typeof storedState?.textDraft === "string" ? storedState.textDraft : "",
+    linkDraft: typeof storedState?.linkDraft === "string" ? storedState.linkDraft : "",
+    workspaceView: storedState?.workspaceView === "chat" ? "chat" : "home",
+    messageDraft:
+      typeof storedState?.messageDraft === "string" ? storedState.messageDraft : "",
+    chatMessages: Array.isArray(storedState?.chatMessages) ? storedState.chatMessages : [],
+  };
+}
+
 export default function Home() {
-  const [workspaceView, setWorkspaceView] = useState("home");
-  const [uploads, setUploads] = useState(initialUploads);
-  const [composerType, setComposerType] = useState(null);
-  const [textDraft, setTextDraft] = useState("");
-  const [linkDraft, setLinkDraft] = useState("");
-  const [messageDraft, setMessageDraft] = useState("");
+  const [initialState] = useState(getInitialState);
+  const [uploads, setUploads] = useState(initialState.uploads);
+  const [composerType, setComposerType] = useState(initialState.composerType);
+  const [textDraft, setTextDraft] = useState(initialState.textDraft);
+  const [linkDraft, setLinkDraft] = useState(initialState.linkDraft);
+  const [workspaceView, setWorkspaceView] = useState(initialState.workspaceView);
+  const [messageDraft, setMessageDraft] = useState(initialState.messageDraft);
+  const [chatMessages, setChatMessages] = useState(initialState.chatMessages);
+  const [isSending, setIsSending] = useState(false);
+  const [chatError, setChatError] = useState("");
   const documentInputRef = useRef(null);
   const pdfInputRef = useRef(null);
   const imageInputRef = useRef(null);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        uploads,
+        composerType,
+        textDraft,
+        linkDraft,
+        workspaceView,
+        messageDraft,
+        chatMessages,
+      }),
+    );
+  }, [chatMessages, composerType, linkDraft, messageDraft, textDraft, uploads, workspaceView]);
 
   const addUploads = (items) => {
     if (!items.length) {
@@ -167,8 +198,13 @@ export default function Home() {
   const handleMaterialSelect = (type) => {
     setComposerType(null);
 
-    if (type === "document") {
-      documentInputRef.current?.click();
+    if (type === "text") {
+      setComposerType("text");
+      return;
+    }
+
+    if (type === "link") {
+      setComposerType("link");
       return;
     }
 
@@ -182,7 +218,7 @@ export default function Home() {
       return;
     }
 
-    setComposerType("link");
+    documentInputRef.current?.click();
   };
 
   const handleAddText = () => {
@@ -229,12 +265,14 @@ export default function Home() {
     setUploads((current) => current.filter((item) => item.id !== id));
   };
 
-  const handleNewResearch = () => {
+  const handleResetResearch = () => {
     setWorkspaceView("home");
     setComposerType(null);
     setTextDraft("");
     setLinkDraft("");
     setMessageDraft("");
+    setChatMessages([]);
+    setChatError("");
   };
 
   const handleStartResearch = () => {
@@ -243,6 +281,61 @@ export default function Home() {
     }
 
     setWorkspaceView("chat");
+  };
+
+  const handleSendMessage = async () => {
+    const trimmed = messageDraft.trim();
+
+    if (!trimmed || isSending) {
+      return;
+    }
+
+    const nextUserMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      text: trimmed,
+    };
+    const nextHistory = [...chatMessages, nextUserMessage];
+
+    setChatMessages(nextHistory);
+    setMessageDraft("");
+    setChatError("");
+    setIsSending(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: trimmed,
+          uploads,
+          history: nextHistory,
+        }),
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Unable to reach Vertex AI right now.");
+      }
+
+      setChatMessages((current) => [
+        ...current,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          text: payload.reply,
+        },
+      ]);
+    } catch (error) {
+      setChatError(
+        error instanceof Error ? error.message : "Unable to reach Vertex AI right now.",
+      );
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -292,19 +385,28 @@ export default function Home() {
 
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <div className={styles.brandMark}>\u2726</div>
+          <div className={styles.brandMark}>✦</div>
           <div>
             <p className={styles.brandTitle}>Researcher</p>
           </div>
         </div>
 
         <nav className={styles.nav}>
-          {sidebarItems.map((item) => (
-            <a
+          {primaryNavItems.map((item) => (
+            <button
               key={item.label}
-              href="#"
-              className={`${styles.navItem} ${item.active ? styles.navItemActive : ""}`}
+              className={`${styles.navItem} ${styles.navButton} ${
+                workspaceView === item.view ? styles.navItemActive : ""
+              }`}
+              onClick={() => setWorkspaceView(item.view)}
             >
+              <span className={styles.navIcon}>{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+
+          {secondaryNavItems.map((item) => (
+            <a key={item.label} href="#" className={styles.navItem}>
               <span className={styles.navIcon}>{item.icon}</span>
               <span>{item.label}</span>
             </a>
@@ -318,13 +420,13 @@ export default function Home() {
               <p className={styles.profileName}>Alex</p>
               <p className={styles.profileEmail}>alex@email.com</p>
             </div>
-            <span className={styles.chevron}>\u2304</span>
+            <span className={styles.chevron}>⌄</span>
           </div>
 
           <button className={styles.modeButton}>
-            <span>\u263C</span>
+            <span>☼</span>
             <span>Light Mode</span>
-            <span className={styles.chevron}>\u2304</span>
+            <span className={styles.chevron}>⌄</span>
           </button>
         </div>
       </aside>
@@ -333,10 +435,10 @@ export default function Home() {
         <header className={styles.header}>
           <div>
             <p className={styles.sectionLabel}>
-              {workspaceView === "home" ? "Home" : "Research Chat"}
+              {workspaceView === "chat" ? "Chat" : "Home"}
             </p>
           </div>
-          <button className={styles.primaryAction} onClick={handleNewResearch}>
+          <button className={styles.primaryAction} onClick={handleResetResearch}>
             + New Research
           </button>
         </header>
@@ -360,11 +462,11 @@ export default function Home() {
               </div>
 
               <div className={styles.heroIllustration}>
-                <div className={styles.sparkleOne}>\u2726</div>
-                <div className={styles.sparkleTwo}>\u2726</div>
-                <div className={styles.sparkleThree}>\u2726</div>
+                <div className={styles.sparkleOne}>✦</div>
+                <div className={styles.sparkleTwo}>✦</div>
+                <div className={styles.sparkleThree}>✦</div>
                 <div className={styles.docGlow}>
-                  <div className={styles.docIcon}>\u2315</div>
+                  <div className={styles.docIcon}>⌕</div>
                 </div>
               </div>
 
@@ -383,21 +485,6 @@ export default function Home() {
                     <span className={styles.materialLabel}>{item.label}</span>
                   </button>
                 ))}
-              </div>
-
-              <div className={styles.quickAddRow}>
-                <button
-                  className={styles.secondaryAction}
-                  onClick={() => setComposerType("text")}
-                >
-                  Paste text
-                </button>
-                <button
-                  className={styles.secondaryAction}
-                  onClick={() => setComposerType("link")}
-                >
-                  Add link
-                </button>
               </div>
 
               {(composerType === "text" || composerType === "link") && (
@@ -517,7 +604,7 @@ export default function Home() {
                 </div>
                 <div className={styles.chatSummaryStats}>
                   <span>{uploads.length} sources</span>
-                  <span>Personal tutor mode</span>
+                  <span>Adaptive tutor mode</span>
                 </div>
               </div>
 
@@ -531,21 +618,29 @@ export default function Home() {
               </div>
 
               <div className={styles.messagesCard}>
-                {tutorMessages.map((message) => (
-                  <article
-                    key={message.id}
-                    className={`${styles.messageBubble} ${
-                      message.role === "assistant"
-                        ? styles.assistantMessage
-                        : styles.userMessage
-                    }`}
-                  >
-                    {message.role === "assistant" && message.title ? (
-                      <p className={styles.messageTitle}>{message.title}</p>
-                    ) : null}
-                    <p>{message.text}</p>
-                  </article>
-                ))}
+                {chatMessages.length ? (
+                  chatMessages.map((message) => (
+                    <article
+                      key={message.id}
+                      className={`${styles.messageBubble} ${
+                        message.role === "assistant"
+                          ? styles.assistantMessage
+                          : styles.userMessage
+                      }`}
+                    >
+                      <p>{message.text}</p>
+                    </article>
+                  ))
+                ) : (
+                  <div className={styles.blankChatState}>
+                    <p className={styles.blankChatEyebrow}>Ready to begin</p>
+                    <h3>Ask your first question about the uploaded materials</h3>
+                    <p>
+                      Start with a summary request, a quiz, or ask for a simple
+                      explanation.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className={styles.promptRow}>
@@ -567,32 +662,21 @@ export default function Home() {
                   value={messageDraft}
                   onChange={(event) => setMessageDraft(event.target.value)}
                 />
+                {chatError ? <p className={styles.chatError}>{chatError}</p> : null}
                 <div className={styles.chatComposerFooter}>
                   <div className={styles.chatComposerMeta}>
-                    <span>Adaptive tutor</span>
-                    <span>Quiz aware</span>
+                    <span>Explains clearly</span>
+                    <span>Builds quizzes</span>
                     <span>Tracks weak topics</span>
                   </div>
-                  <button className={styles.primaryActionSmall}>Send</button>
+                  <button className={styles.primaryActionSmall} onClick={handleSendMessage}>
+                    {isSending ? "Thinking..." : "Send"}
+                  </button>
                 </div>
               </div>
             </div>
 
             <aside className={styles.chatRail}>
-              <section className={styles.railCard}>
-                <div className={styles.railHeader}>
-                  <h3>Study tools</h3>
-                </div>
-                <div className={styles.railList}>
-                  {coachCards.map((card) => (
-                    <article key={card.title} className={styles.toolCard}>
-                      <p className={styles.toolTitle}>{card.title}</p>
-                      <p className={styles.toolText}>{card.text}</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
-
               <section className={styles.railCard}>
                 <div className={styles.railHeader}>
                   <h3>Recent research</h3>
@@ -606,6 +690,20 @@ export default function Home() {
                         <span>{item.time}</span>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className={styles.railCard}>
+                <div className={styles.railHeader}>
+                  <h3>Study tools</h3>
+                </div>
+                <div className={styles.railList}>
+                  {coachCards.map((card) => (
+                    <article key={card.title} className={styles.toolCard}>
+                      <p className={styles.toolTitle}>{card.title}</p>
+                      <p className={styles.toolText}>{card.text}</p>
+                    </article>
                   ))}
                 </div>
               </section>
