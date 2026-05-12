@@ -20,7 +20,7 @@ export async function GET() {
     model,
     mode:
       apiKeyPresent && project
-        ? "vertex-api-key"
+        ? "vertex-api-key-sdk-v2"
         : apiKeyPresent
           ? "gemini-api-key"
           : project

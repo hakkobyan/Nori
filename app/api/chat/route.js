@@ -34,8 +34,6 @@ function createAiClient() {
     return new GoogleGenAI({
       vertexai: true,
       apiKey,
-      project,
-      location,
     });
   }
 
