@@ -129,6 +129,22 @@ function readStoredState() {
   }
 }
 
+async function readJsonResponse(response) {
+  const rawText = await response.text();
+
+  if (!rawText) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(rawText);
+  } catch {
+    throw new Error(
+      `The AI server returned an unexpected response (${response.status} ${response.statusText}).`,
+    );
+  }
+}
+
 function getInitialState() {
   const storedState = readStoredState();
 
@@ -315,10 +331,10 @@ export default function Home() {
         }),
       });
 
-      const payload = await response.json();
+      const payload = await readJsonResponse(response);
 
       if (!response.ok) {
-        throw new Error(payload?.error || "Unable to reach Vertex AI right now.");
+        throw new Error(payload?.error || "Unable to reach the AI server right now.");
       }
 
       setChatMessages((current) => [
@@ -326,12 +342,12 @@ export default function Home() {
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          text: payload.reply,
+          text: payload.reply || "The AI server returned an empty reply.",
         },
       ]);
     } catch (error) {
       setChatError(
-        error instanceof Error ? error.message : "Unable to reach Vertex AI right now.",
+        error instanceof Error ? error.message : "Unable to reach the AI server right now.",
       );
     } finally {
       setIsSending(false);
