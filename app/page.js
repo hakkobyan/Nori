@@ -1,20 +1,22 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./page.module.css";
 
+const STORAGE_KEY = "nori-home-state";
+
 const primaryNavItems = [
-  { label: "Home", icon: "⌂", view: "home" },
-  { label: "Chat", icon: "◉", view: "chat" },
+  { label: "Home", icon: "вЊ‚", view: "home" },
+  { label: "Chat", icon: "в—‰", view: "chat" },
 ];
 
 const secondaryNavItems = [
-  { label: "History", icon: "◷" },
-  { label: "Projects", icon: "□" },
-  { label: "Bookmarks", icon: "▯" },
-  { label: "Templates", icon: "⌘" },
-  { label: "Settings", icon: "⚙" },
+  { label: "History", icon: "в—·" },
+  { label: "Projects", icon: "в–Ў" },
+  { label: "Bookmarks", icon: "в–Ї" },
+  { label: "Templates", icon: "вЊ" },
+  { label: "Settings", icon: "вљ™" },
 ];
 
 const materialTypes = [
@@ -52,17 +54,17 @@ const steps = [
   {
     title: "Upload your content",
     description: "Add text, PDF, image or link",
-    icon: "⇪",
+    icon: "в‡Є",
   },
   {
     title: "AI researches",
     description: "It will analyze and gather key insights",
-    icon: "◔",
+    icon: "в—”",
   },
   {
     title: "Let's chat",
     description: "Ask questions and get answers",
-    icon: "◌",
+    icon: "в—Њ",
   },
 ];
 
@@ -91,14 +93,6 @@ const coachCards = [
   { title: "Weak spots", text: "Repeat difficult topics until they stick." },
 ];
 
-const researchKickoffTemplates = [
-  "Please research these materials for me: {files}. Start by telling me what they are mainly about and what I should focus on first.",
-  "Can you research the files I uploaded: {files}? Give me the big picture first, then guide me through the most important parts.",
-  "Please look through {files} and research them for me. I want a clear overview, the key ideas, and the best place to begin.",
-  "Research the uploaded materials for me: {files}. Help me understand the topic, the core concepts, and what deserves my attention first.",
-  "I just uploaded {files}. Please research them for me and open with a concise overview plus the main themes I should study.",
-];
-
 function formatBytes(size) {
   if (size < 1024 * 1024) {
     return `${(size / 1024).toFixed(1)} KB`;
@@ -117,29 +111,22 @@ function buildFileUpload(file, icon, alt, label) {
   };
 }
 
-function listUploadNames(uploads) {
-  if (!uploads.length) {
-    return "the uploaded materials";
+function readStoredState() {
+  if (typeof window === "undefined") {
+    return null;
   }
 
-  const names = uploads.map((item) => item.name);
+  try {
+    const rawValue = window.localStorage.getItem(STORAGE_KEY);
 
-  if (names.length === 1) {
-    return names[0];
+    if (!rawValue) {
+      return null;
+    }
+
+    return JSON.parse(rawValue);
+  } catch {
+    return null;
   }
-
-  if (names.length === 2) {
-    return `${names[0]} and ${names[1]}`;
-  }
-
-  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
-}
-
-function createResearchKickoffMessage(uploads) {
-  const template =
-    researchKickoffTemplates[Math.floor(Math.random() * researchKickoffTemplates.length)];
-
-  return template.replace("{files}", listUploadNames(uploads));
 }
 
 async function readJsonResponse(response) {
@@ -161,19 +148,53 @@ async function readJsonResponse(response) {
   }
 }
 
+function getInitialState() {
+  const storedState = readStoredState();
+
+  return {
+    uploads: storedState?.uploads?.length ? storedState.uploads : initialUploads,
+    composerType:
+      storedState?.composerType === "text" || storedState?.composerType === "link"
+        ? storedState.composerType
+        : null,
+    textDraft: typeof storedState?.textDraft === "string" ? storedState.textDraft : "",
+    linkDraft: typeof storedState?.linkDraft === "string" ? storedState.linkDraft : "",
+    workspaceView: storedState?.workspaceView === "chat" ? "chat" : "home",
+    messageDraft:
+      typeof storedState?.messageDraft === "string" ? storedState.messageDraft : "",
+    chatMessages: Array.isArray(storedState?.chatMessages) ? storedState.chatMessages : [],
+  };
+}
+
 export default function Home() {
-  const [uploads, setUploads] = useState(initialUploads);
-  const [composerType, setComposerType] = useState(null);
-  const [textDraft, setTextDraft] = useState("");
-  const [linkDraft, setLinkDraft] = useState("");
-  const [workspaceView, setWorkspaceView] = useState("home");
-  const [messageDraft, setMessageDraft] = useState("");
-  const [chatMessages, setChatMessages] = useState([]);
+  const [initialState] = useState(getInitialState);
+  const [uploads, setUploads] = useState(initialState.uploads);
+  const [composerType, setComposerType] = useState(initialState.composerType);
+  const [textDraft, setTextDraft] = useState(initialState.textDraft);
+  const [linkDraft, setLinkDraft] = useState(initialState.linkDraft);
+  const [workspaceView, setWorkspaceView] = useState(initialState.workspaceView);
+  const [messageDraft, setMessageDraft] = useState(initialState.messageDraft);
+  const [chatMessages, setChatMessages] = useState(initialState.chatMessages);
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState("");
   const documentInputRef = useRef(null);
   const pdfInputRef = useRef(null);
   const imageInputRef = useRef(null);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        uploads,
+        composerType,
+        textDraft,
+        linkDraft,
+        workspaceView,
+        messageDraft,
+        chatMessages,
+      }),
+    );
+  }, [chatMessages, composerType, linkDraft, messageDraft, textDraft, uploads, workspaceView]);
 
   const addUploads = (items) => {
     if (!items.length) {
@@ -273,8 +294,16 @@ export default function Home() {
     setChatError("");
   };
 
-  const sendMessage = async (text) => {
-    const trimmed = text.trim();
+  const handleStartResearch = () => {
+    if (!uploads.length) {
+      return;
+    }
+
+    setWorkspaceView("chat");
+  };
+
+  const handleSendMessage = async () => {
+    const trimmed = messageDraft.trim();
 
     if (!trimmed || isSending) {
       return;
@@ -328,19 +357,6 @@ export default function Home() {
     }
   };
 
-  const handleStartResearch = async () => {
-    if (!uploads.length || isSending) {
-      return;
-    }
-
-    setWorkspaceView("chat");
-    await sendMessage(createResearchKickoffMessage(uploads));
-  };
-
-  const handleSendMessage = async () => {
-    await sendMessage(messageDraft);
-  };
-
   return (
     <div className={styles.page}>
       <input
@@ -388,7 +404,7 @@ export default function Home() {
 
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <div className={styles.brandMark}>✦</div>
+          <div className={styles.brandMark}>вњ¦</div>
           <div>
             <p className={styles.brandTitle}>Researcher</p>
           </div>
@@ -423,13 +439,13 @@ export default function Home() {
               <p className={styles.profileName}>Alex</p>
               <p className={styles.profileEmail}>alex@email.com</p>
             </div>
-            <span className={styles.chevron}>⌄</span>
+            <span className={styles.chevron}>вЊ„</span>
           </div>
 
           <button className={styles.modeButton}>
-            <span>☼</span>
+            <span>вј</span>
             <span>Light Mode</span>
-            <span className={styles.chevron}>⌄</span>
+            <span className={styles.chevron}>вЊ„</span>
           </button>
         </div>
       </aside>
@@ -451,12 +467,12 @@ export default function Home() {
             <section className={styles.heroCard}>
               <div className={styles.heroText}>
                 <p className={styles.emojiLead} aria-hidden="true">
-                  👋
+                  рџ‘‹
                 </p>
                 <h1 className={styles.heroTitle}>
                   What would you like
                   <br />
-                  to <span>research</span> today? 🚀
+                  to <span>research</span> today? рџљЂ
                 </h1>
                 <p className={styles.heroDescription}>
                   Send any text, PDF, image or link and I&apos;ll research it and chat
@@ -465,11 +481,11 @@ export default function Home() {
               </div>
 
               <div className={styles.heroIllustration}>
-                <div className={styles.sparkleOne}>✦</div>
-                <div className={styles.sparkleTwo}>✦</div>
-                <div className={styles.sparkleThree}>✦</div>
+                <div className={styles.sparkleOne}>вњ¦</div>
+                <div className={styles.sparkleTwo}>вњ¦</div>
+                <div className={styles.sparkleThree}>вњ¦</div>
                 <div className={styles.docGlow}>
-                  <div className={styles.docIcon}>⌕</div>
+                  <div className={styles.docIcon}>вЊ•</div>
                 </div>
               </div>
 
@@ -549,10 +565,6 @@ export default function Home() {
             <section className={styles.uploadsCard}>
               <div className={styles.cardHeader}>
                 <h2>Your uploads ({uploads.length})</h2>
-                <p className={styles.cardSubcopy}>
-                  When you start, Nori will send a research kickoff message using these
-                  materials and open the chat with an AI-generated overview.
-                </p>
               </div>
 
               <div className={styles.uploadList}>
@@ -579,12 +591,8 @@ export default function Home() {
                 ))}
               </div>
 
-              <button
-                className={styles.startButton}
-                onClick={handleStartResearch}
-                disabled={isSending}
-              >
-                {isSending && workspaceView === "chat" ? "Researching..." : "Start Research"}
+              <button className={styles.startButton} onClick={handleStartResearch}>
+                Start Research
               </button>
             </section>
 
@@ -610,16 +618,11 @@ export default function Home() {
             <div className={styles.chatMain}>
               <div className={styles.chatSummary}>
                 <div>
-                  <p className={styles.chatEyebrow}>Research kickoff</p>
-                  <h2 className={styles.chatHeading}>Your materials are being turned into a study conversation</h2>
-                  <p className={styles.chatLead}>
-                    Nori opens each session by sending the AI a natural research request based
-                    on the files you uploaded, then turns the response into a guided chat.
-                  </p>
+                  <p className={styles.chatEyebrow}>Session overview</p>
+                  <h2 className={styles.chatHeading}>Your materials are ready to study</h2>
                 </div>
                 <div className={styles.chatSummaryStats}>
                   <span>{uploads.length} sources</span>
-                  <span>Auto research prompt</span>
                   <span>Adaptive tutor mode</span>
                 </div>
               </div>
@@ -650,10 +653,10 @@ export default function Home() {
                 ) : (
                   <div className={styles.blankChatState}>
                     <p className={styles.blankChatEyebrow}>Ready to begin</p>
-                    <h3>Start research to let Nori send the opening prompt for you</h3>
+                    <h3>Ask your first question about the uploaded materials</h3>
                     <p>
-                      The first message will be generated automatically from your uploads, and
-                      after that you can keep the conversation going naturally.
+                      Start with a summary request, a quiz, or ask for a simple
+                      explanation.
                     </p>
                   </div>
                 )}
@@ -665,7 +668,6 @@ export default function Home() {
                     key={prompt}
                     className={styles.promptChip}
                     onClick={() => setMessageDraft(prompt)}
-                    disabled={isSending}
                   >
                     {prompt}
                   </button>
@@ -678,7 +680,6 @@ export default function Home() {
                   placeholder="Ask the tutor to explain, quiz, compare, or review your answers..."
                   value={messageDraft}
                   onChange={(event) => setMessageDraft(event.target.value)}
-                  disabled={isSending}
                 />
                 {chatError ? <p className={styles.chatError}>{chatError}</p> : null}
                 <div className={styles.chatComposerFooter}>
@@ -687,11 +688,7 @@ export default function Home() {
                     <span>Builds quizzes</span>
                     <span>Tracks weak topics</span>
                   </div>
-                  <button
-                    className={styles.primaryActionSmall}
-                    onClick={handleSendMessage}
-                    disabled={isSending}
-                  >
+                  <button className={styles.primaryActionSmall} onClick={handleSendMessage}>
                     {isSending ? "Thinking..." : "Send"}
                   </button>
                 </div>

@@ -16,3 +16,6 @@ Creating turbopack project { dir: 'D:\\nori', testMode: true }
  GET /api/health 200 in 328ms (next.js: 323ms, application-code: 5ms)
  POST /api/chat 500 in 656ms (next.js: 68ms, application-code: 588ms)
  POST /api/chat 500 in 527ms (next.js: 48ms, application-code: 479ms)
+  Reload env: .env.local
+ GET / 200 in 209ms (next.js: 77ms, application-code: 132ms)
+ POST /api/chat 500 in 560ms (next.js: 60ms, application-code: 500ms)

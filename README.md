@@ -11,12 +11,9 @@ GEMINI_API_KEY=your-gemini-api-key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-This same setup also works on Vercel. Add the same variables in the Vercel project settings.
-
-If you prefer Vertex AI instead of a Gemini API key, opt into it explicitly:
+If you prefer Vertex AI instead of a Gemini API key, you can use:
 
 ```bash
-GOOGLE_GENAI_USE_VERTEXAI=true
 GOOGLE_CLOUD_PROJECT=your-gcp-project-id
 GOOGLE_CLOUD_LOCATION=global
 GEMINI_MODEL=gemini-2.5-flash
@@ -39,12 +36,11 @@ GEMINI_API_KEY=your-gemini-api-key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-That is the simplest production setup and does not require Google Cloud runtime credentials. You can also use `GOOGLE_API_KEY` as an alias if that is what your environment already uses.
+That is the simplest production setup and does not require Google Cloud runtime credentials.
 
-If you want to use Vertex AI on Vercel instead, you must opt into it and provide Google Cloud authentication in addition to:
+If you want to use Vertex AI on Vercel instead, you will also need Google Cloud authentication in addition to:
 
 ```bash
-GOOGLE_GENAI_USE_VERTEXAI=true
 GOOGLE_CLOUD_PROJECT=your-gcp-project-id
 GOOGLE_CLOUD_LOCATION=global
 GEMINI_MODEL=gemini-2.5-flash
@@ -54,8 +50,8 @@ GEMINI_MODEL=gemini-2.5-flash
 
 - The UI sends chat requests to `app/api/chat/route.js`.
 - The route reads server-side environment variables at runtime.
-- If `GEMINI_API_KEY` or `GOOGLE_API_KEY` is set, the app uses the Gemini API directly.
-- If `GOOGLE_GENAI_USE_VERTEXAI=true` is set, the app uses Vertex AI instead.
+- If `GEMINI_API_KEY` is set, the app uses the Gemini API directly.
+- If no API key is set but `GOOGLE_CLOUD_PROJECT` is present, the app falls back to Vertex AI.
 
 ## Learn More
 
