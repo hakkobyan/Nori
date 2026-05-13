@@ -19,3 +19,17 @@ Creating turbopack project { dir: 'D:\\nori', testMode: true }
   Reload env: .env.local
  GET / 200 in 209ms (next.js: 77ms, application-code: 132ms)
  POST /api/chat 500 in 560ms (next.js: 60ms, application-code: 500ms)
+ GET / 200 in 56ms (next.js: 4ms, application-code: 52ms)
+ POST /api/chat 500 in 488ms (next.js: 3ms, application-code: 485ms)
+ GET / 200 in 314ms (next.js: 88ms, application-code: 226ms)
+ GET / 200 in 240ms (next.js: 3ms, application-code: 237ms)
+ GET / 200 in 195ms (next.js: 5ms, application-code: 190ms)
+ GET / 200 in 196ms (next.js: 33ms, application-code: 163ms)
+ GET / 200 in 198ms (next.js: 62ms, application-code: 135ms)
+ GET / 200 in 205ms (next.js: 95ms, application-code: 110ms)
+ GET / 200 in 218ms (next.js: 71ms, application-code: 147ms)
+ GET / 200 in 73ms (next.js: 4ms, application-code: 69ms)
+ GET / 200 in 49ms (next.js: 3ms, application-code: 46ms)
+ GET / 200 in 50ms (next.js: 22ms, application-code: 28ms)
+✓ Compiled in 44ms
+ GET / 200 in 171ms (next.js: 102ms, application-code: 70ms)

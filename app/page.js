@@ -83,7 +83,7 @@ const recentResearch = [
 const starterPrompts = [
   "Summarize the key points.",
   "Quiz me on this material.",
-  "Explain the hardest part simply.",
+  "Explain it like a friend.",
   "Make a short study plan.",
 ];
 
@@ -677,16 +677,16 @@ export default function Home() {
               <div className={styles.chatComposer}>
                 <textarea
                   className={styles.chatTextarea}
-                  placeholder="Ask the tutor to explain, quiz, compare, or review your answers..."
+                  placeholder="Ask like you would text a smart friend..."
                   value={messageDraft}
                   onChange={(event) => setMessageDraft(event.target.value)}
                 />
                 {chatError ? <p className={styles.chatError}>{chatError}</p> : null}
                 <div className={styles.chatComposerFooter}>
                   <div className={styles.chatComposerMeta}>
-                    <span>Explains clearly</span>
-                    <span>Builds quizzes</span>
-                    <span>Tracks weak topics</span>
+                    <span>Short replies</span>
+                    <span>Friendly tone</span>
+                    <span>Easy to follow</span>
                   </div>
                   <button className={styles.primaryActionSmall} onClick={handleSendMessage}>
                     {isSending ? "Thinking..." : "Send"}
