@@ -1,6 +1,6 @@
-⚠ Slow filesystem detected. The benchmark took 510ms. If D:\nori\.next/dev is a network drive, consider moving it to a local folder.
+⚠ Slow filesystem detected. The benchmark took 283ms. If D:\nori\.next/dev is a network drive, consider moving it to a local folder.
 See more: https://nextjs.org/docs/app/guides/local-development
-[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+[browser] Uncaught Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
 
 - A server/client branch `if (typeof window !== 'undefined')`.
 - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
@@ -21,14 +21,7 @@ https://react.dev/link/hydration-mismatch
             <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
               <RedirectBoundary>
                 <RedirectErrorBoundary router={{...}}>
-                  <Head headCacheNode={{rsc:{...}, ...}}>
-                    <__next_viewport_boundary__>
-                    <MetadataWrapper>
-                      <div
-                        hidden={true}
--                       bis_skin_checked="1"
-                      >
-                    ...
+                  <Head>
                   <__next_root_layout_boundary__>
                     <SegmentViewNode type="layout" pagePath="layout.js">
                       <SegmentTrieNode>
@@ -38,113 +31,46 @@ https://react.dev/link/hydration-mismatch
                       <RootLayout>
                         <html lang="en" className="geist_2ae4...">
                           <body
--                           __processed_44948544-18e0-41b7-918a-e4fbadd30895__="true"
+-                           __processed_51785da5-312d-4997-8810-ce631e96dd69__="true"
 -                           bis_register="W3sibWFzdGVyIjp0cnVlLCJleHRlbnNpb25JZCI6ImVwcGlvY2VtaG1ubGJoanBsY2drb2ZjaWll..."
                           >
                             ...
-                              <SegmentViewNode type="page" pagePath="page.js">
-                                <SegmentTrieNode>
-                                <ClientPageRoot Component={function Home} serverProvidedParams={{...}}>
-                                  <Home params={Promise} searchParams={Promise}>
-                                    <div
-                                      className="page-module__E0kJGG__page"
--                                     bis_skin_checked="1"
+                              <div className="page-modul...">
+                                <input>
+                                <input>
+                                <input>
+                                <aside className="page-modul...">
+                                  <div>
+                                  <nav className="page-modul...">
+                                    <button
++                                     className={"page-module__E0kJGG__navItem page-module__E0kJGG__navButton "}
+-                                     className="page-module__E0kJGG__navItem page-module__E0kJGG__navButton page-modu..."
+                                      onClick={function onClick}
                                     >
-                                      <input>
-                                      <input>
-                                      <input>
-                                      <aside className="page-modul...">
-                                        <div
-                                          className="page-module__E0kJGG__brand"
--                                         bis_skin_checked="1"
-                                        >
-                                          <div
-                                            className="page-module__E0kJGG__brandMark"
--                                           bis_skin_checked="1"
-                                          >
-+                                           ✦
-                                          <div
--                                           bis_skin_checked="1"
-                                          >
-                                        <nav>
-                                        <div
-                                          className="page-module__E0kJGG__sidebarFooter"
--                                         bis_skin_checked="1"
-                                        >
-                                          <div
-                                            className="page-module__E0kJGG__profileCard"
--                                           bis_skin_checked="1"
-                                          >
-                                            <div
-                                              className="page-module__E0kJGG__avatar"
--                                             bis_skin_checked="1"
-                                            >
-+                                             A
-                                            <div
--                                             bis_skin_checked="1"
-                                            >
-                                            ...
-                                          ...
-                                      <main className="page-modul...">
-                                        <header className="page-modul...">
-                                          <div
--                                           bis_skin_checked="1"
-                                          >
-                                          ...
-                                        <section className="page-modul...">
-                                          <div
-                                            className="page-module__E0kJGG__heroText"
--                                           bis_skin_checked="1"
-                                          >
-                                          <div
-                                            className="page-module__E0kJGG__heroIllustration"
--                                           bis_skin_checked="1"
-                                          >
-                                            <div
-                                              className="page-module__E0kJGG__sparkleOne"
--                                             bis_skin_checked="1"
-                                            >
-+                                             ✦
-                                            <div
-                                              className="page-module__E0kJGG__sparkleTwo"
--                                             bis_skin_checked="1"
-                                            >
-+                                             ✦
-                                            <div
-                                              className="page-module__E0kJGG__sparkleThree"
--                                             bis_skin_checked="1"
-                                            >
-+                                             ✦
-                                            <div
-                                              className="page-module__E0kJGG__docGlow"
--                                             bis_skin_checked="1"
-                                            >
-                                              <div
-                                                className="page-module__E0kJGG__docIcon"
--                                               bis_skin_checked="1"
-                                              >
-+                                               ⌕
-                                          <div
-                                            className="page-module__E0kJGG__materialGrid"
--                                           bis_skin_checked="1"
-                                          >
-                                            <button
-+                                             className="page-module__E0kJGG__materialCard page-module__E0kJGG__materi..."
--                                             className={"page-module__E0kJGG__materialCard "}
-                                              onClick={function onClick}
-                                            >
-                                            ...
-+                                         <div className="page-module__E0kJGG__composerCard">
-                                        ...
+                                    <button
++                                     className="page-module__E0kJGG__navItem page-module__E0kJGG__navButton page-modu..."
+-                                     className={"page-module__E0kJGG__navItem page-module__E0kJGG__navButton "}
+                                      onClick={function onClick}
+                                    >
+                                    ...
+                                  ...
+                                <main className="page-modul...">
+                                  <header className="page-modul...">
+                                    <div>
+                                      <p className="page-module__E0kJGG__sectionLabel">
++                                       Chat
+-                                       Home
+                                    ...
+                                  ...
                   ...
 
     at <unknown> (https://react.dev/link/hydration-mismatch)
-    at div (<anonymous>)
-    at Home (app/page.js:491:17)
-  489 |
-  490 |               {(composerType === "text" || composerType === "link") && (
-> 491 |                 <div className={styles.composerCard}>
-      |                 ^
-  492 |                   <div className={styles.composerHeader}>
-  493 |                     <h3>{composerType === "text" ? "Add text" : "Add link"}</h3>
-  494 |                     <button
+    at p (<anonymous>)
+    at Home (app/page.js:456:13)
+  454 |         <header className={styles.header}>
+  455 |           <div>
+> 456 |             <p className={styles.sectionLabel}>
+      |             ^
+  457 |               {workspaceView === "chat" ? "Chat" : "Home"}
+  458 |             </p>
+  459 |           </div>

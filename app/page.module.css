@@ -364,6 +364,13 @@
   line-height: 1.15;
 }
 
+.chatLead {
+  margin-top: 10px;
+  max-width: 620px;
+  color: #756e89;
+  line-height: 1.7;
+}
+
 .chatSummaryStats {
   display: flex;
   flex-wrap: wrap;
@@ -746,6 +753,13 @@
   font-weight: 700;
 }
 
+.cardSubcopy {
+  margin-top: 8px;
+  max-width: 620px;
+  color: #7b748f;
+  line-height: 1.6;
+}
+
 .uploadList {
   margin-top: 8px;
 }
@@ -825,6 +839,16 @@
   margin-top: 14px;
   padding: 16px 18px;
   font-size: 1rem;
+}
+
+.startButton:disabled,
+.primaryActionSmall:disabled,
+.promptChip:disabled,
+.chatTextarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
 }
 
 .stepsGrid {

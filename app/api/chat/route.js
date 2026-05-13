@@ -1,12 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
+import { getAiConfig } from "@/lib/ai-config";
 
 export const runtime = "nodejs";
-
-const MODEL =
-  process.env.GEMINI_MODEL ||
-  process.env.GOOGLE_AI_MODEL ||
-  process.env.VERTEX_MODEL ||
-  "gemini-2.5-flash";
 
 function buildPromptContext(uploads) {
   if (!uploads?.length) {
@@ -25,47 +20,77 @@ function toVertexContents(history) {
   }));
 }
 
+function buildContents(history, message) {
+  const contents = toVertexContents(history);
+
+  if (contents.length > 0) {
+    return contents;
+  }
+
+  return [
+    {
+      role: "user",
+      parts: [{ text: message.trim() }],
+    },
+  ];
+}
+
+function normalizeAiError(error) {
+  if (!(error instanceof Error)) {
+    return "AI request failed.";
+  }
+
+  const rawMessage = error.message.trim();
+
+  try {
+    const parsed = JSON.parse(rawMessage);
+    const apiMessage = parsed?.error?.message;
+    const apiStatus = parsed?.error?.status;
+
+    if (typeof apiMessage === "string" && apiMessage) {
+      if (apiStatus === "RESOURCE_EXHAUSTED") {
+        return "The configured Gemini API key has no available credits or billing quota. Update GEMINI_API_KEY in .env.local or add billing in Google AI Studio.";
+      }
+
+      return apiMessage;
+    }
+  } catch {}
+
+  if (rawMessage.includes("RESOURCE_EXHAUSTED")) {
+    return "The configured Gemini API key has no available credits or billing quota. Update GEMINI_API_KEY in .env.local or add billing in Google AI Studio.";
+  }
+
+  return rawMessage || "AI request failed.";
+}
+
 function createAiClient() {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  const project = process.env.GOOGLE_CLOUD_PROJECT;
-  const location = process.env.GOOGLE_CLOUD_LOCATION || "global";
+  const config = getAiConfig();
 
-  if (apiKey && project) {
-    return new GoogleGenAI({
-      vertexai: true,
-      apiKey,
-    });
-  }
-
-  if (apiKey) {
-    return new GoogleGenAI({ apiKey });
-  }
-
-  if (project) {
-    return new GoogleGenAI({
-      vertexai: true,
-      project,
-      location,
-    });
+  if (config.isConfigured && config.clientOptions) {
+    return {
+      client: new GoogleGenAI(config.clientOptions),
+      config,
+    };
   }
 
   return null;
 }
 
 export async function POST(request) {
-  const ai = createAiClient();
+  const aiContext = createAiClient();
 
-  if (!ai) {
+  if (!aiContext) {
     return Response.json(
       {
         error:
-          "AI is not configured. Set GOOGLE_API_KEY with GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION for Vertex AI, or use GEMINI_API_KEY for direct Gemini API access.",
+          "AI is not configured. For localhost and Vercel, set GEMINI_API_KEY or GOOGLE_API_KEY. For Vertex AI, set GOOGLE_GENAI_USE_VERTEXAI=true plus GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION.",
       },
       { status: 500 },
     );
   }
 
   try {
+    const { client: ai, config } = aiContext;
     const { message, uploads = [], history = [] } = await request.json();
 
     if (!message?.trim()) {
@@ -73,8 +98,8 @@ export async function POST(request) {
     }
 
     const response = await ai.models.generateContent({
-      model: MODEL,
-      contents: toVertexContents(history),
+      model: config.model,
+      contents: buildContents(history, message),
       config: {
         temperature: 0.5,
         systemInstruction: `You are an adaptive AI tutor inside a learning application.
@@ -204,11 +229,10 @@ Output style:
     return Response.json({
       reply:
         response.text ||
-        "I could not generate a text reply from Vertex AI for that request.",
+        "I could not generate a text reply for that request.",
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Vertex AI request failed.";
+    const message = normalizeAiError(error);
 
     return Response.json({ error: message }, { status: 500 });
   }

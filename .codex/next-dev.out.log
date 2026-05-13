@@ -5,7 +5,14 @@
 ▲ Next.js 16.2.6 (Turbopack)
 - Local:         http://localhost:3000
 - Network:       http://192.168.31.152:3000
-✓ Ready in 11.8s
+- Environments: .env.local
+✓ Ready in 4.9s
 Creating turbopack project { dir: 'D:\\nori', testMode: true }
 
- GET / 200 in 1433ms (next.js: 831ms, application-code: 601ms)
+ GET / 200 in 765ms (next.js: 551ms, application-code: 215ms)
+ GET / 200 in 65ms (next.js: 6ms, application-code: 59ms)
+ POST /api/chat 500 in 800ms (next.js: 211ms, application-code: 589ms)
+ POST /api/chat 500 in 68ms (next.js: 58ms, application-code: 10ms)
+ GET /api/health 200 in 328ms (next.js: 323ms, application-code: 5ms)
+ POST /api/chat 500 in 656ms (next.js: 68ms, application-code: 588ms)
+ POST /api/chat 500 in 527ms (next.js: 48ms, application-code: 479ms)
