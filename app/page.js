@@ -7,16 +7,16 @@ import styles from "./page.module.css";
 const STORAGE_KEY = "nori-home-state";
 
 const primaryNavItems = [
-  { label: "Home", icon: "вЊ‚", view: "home" },
-  { label: "Chat", icon: "в—‰", view: "chat" },
+  { label: "Home", icon: "⌂", view: "home" },
+  { label: "Chat", icon: "◉", view: "chat" },
 ];
 
 const secondaryNavItems = [
-  { label: "History", icon: "в—·" },
-  { label: "Projects", icon: "в–Ў" },
-  { label: "Bookmarks", icon: "в–Ї" },
-  { label: "Templates", icon: "вЊ" },
-  { label: "Settings", icon: "вљ™" },
+  { label: "History", icon: "◷" },
+  { label: "Projects", icon: "□" },
+  { label: "Bookmarks", icon: "▯" },
+  { label: "Templates", icon: "⌘" },
+  { label: "Settings", icon: "⚙" },
 ];
 
 const materialTypes = [
@@ -54,17 +54,17 @@ const steps = [
   {
     title: "Upload your content",
     description: "Add text, PDF, image or link",
-    icon: "в‡Є",
+    icon: "⇪",
   },
   {
     title: "AI researches",
     description: "It will analyze and gather key insights",
-    icon: "в—”",
+    icon: "◔",
   },
   {
     title: "Let's chat",
     description: "Ask questions and get answers",
-    icon: "в—Њ",
+    icon: "◊",
   },
 ];
 
@@ -80,17 +80,67 @@ const recentResearch = [
   { title: "https://example.com/article", time: "May 12, 2024", icon: "/link.png", alt: "Link icon" },
 ];
 
-const starterPrompts = [
-  "Summarize the key points.",
-  "Quiz me on this material.",
-  "Explain it like a friend.",
-  "Make a short study plan.",
-];
-
-const coachCards = [
-  { title: "Lesson mode", text: "Walk through the material step by step like a tutor." },
-  { title: "Quiz mode", text: "Generate quick questions and check your answers." },
-  { title: "Weak spots", text: "Repeat difficult topics until they stick." },
+const researchModes = [
+  {
+    id: "overview",
+    eyebrow: "Fresh research board",
+    heading: "Start wide, then zoom in",
+    subheading: "This chat opens with overview-first prompts so you can get the big picture fast.",
+    prompts: [
+      "Give me the big picture first.",
+      "What are the key ideas here?",
+      "What should I focus on first?",
+      "Explain it like a friend.",
+    ],
+    cards: [
+      { title: "Overview", text: "Start with themes, structure, and what matters most." },
+      { title: "Priorities", text: "Find the parts worth attention first." },
+      { title: "Quick recap", text: "Keep it compact and easy to remember." },
+    ],
+    actions: ["Map key ideas", "Make it simple", "Spot the main theme"],
+    emptyTitle: "This new chat is ready for a wide-angle overview",
+    emptyText: "Ask for the main idea, important sections, or what deserves attention first.",
+  },
+  {
+    id: "study",
+    eyebrow: "New study session",
+    heading: "Turn the material into a learning path",
+    subheading: "This version is shaped for short explanations, mini roadmaps, and small check-ins.",
+    prompts: [
+      "Make me a short study plan.",
+      "Teach me this step by step.",
+      "Quiz me on the basics.",
+      "What should I learn before the hard parts?",
+    ],
+    cards: [
+      { title: "Study path", text: "Break the topic into a few manageable blocks." },
+      { title: "Check-ins", text: "Use quick questions instead of long explanations." },
+      { title: "Progress", text: "Keep the next step obvious." },
+    ],
+    actions: ["Build study path", "Ask one quiz", "Check prerequisites"],
+    emptyTitle: "This new chat is set up like a study session",
+    emptyText: "Ask for a mini plan, a quick explanation, or a one-question quiz to get moving.",
+  },
+  {
+    id: "practical",
+    eyebrow: "Fresh practice room",
+    heading: "Focus on examples and real use",
+    subheading: "This chat leans toward scenarios, comparisons, and practical examples.",
+    prompts: [
+      "Show me a practical example.",
+      "How would this work in real life?",
+      "Compare the main concepts simply.",
+      "Give me one scenario to think through.",
+    ],
+    cards: [
+      { title: "Examples", text: "Translate ideas into everyday or work-style examples." },
+      { title: "Scenarios", text: "Use one small situation at a time." },
+      { title: "Comparisons", text: "Understand differences without a wall of text." },
+    ],
+    actions: ["Show example", "Compare concepts", "Create scenario"],
+    emptyTitle: "This new chat is built for practical understanding",
+    emptyText: "Ask for examples, real-life uses, or a simple comparison between ideas.",
+  },
 ];
 
 function formatBytes(size) {
@@ -129,6 +179,16 @@ function readStoredState() {
   }
 }
 
+function getModeById(id) {
+  return researchModes.find((mode) => mode.id === id) || researchModes[0];
+}
+
+function getNextMode(currentModeId) {
+  const currentIndex = researchModes.findIndex((mode) => mode.id === currentModeId);
+  const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % researchModes.length;
+  return researchModes[nextIndex];
+}
+
 async function readJsonResponse(response) {
   const rawText = await response.text();
 
@@ -163,6 +223,7 @@ function getInitialState() {
     messageDraft:
       typeof storedState?.messageDraft === "string" ? storedState.messageDraft : "",
     chatMessages: Array.isArray(storedState?.chatMessages) ? storedState.chatMessages : [],
+    activeMode: getModeById(storedState?.activeModeId),
   };
 }
 
@@ -175,6 +236,7 @@ export default function Home() {
   const [workspaceView, setWorkspaceView] = useState(initialState.workspaceView);
   const [messageDraft, setMessageDraft] = useState(initialState.messageDraft);
   const [chatMessages, setChatMessages] = useState(initialState.chatMessages);
+  const [activeMode, setActiveMode] = useState(initialState.activeMode);
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState("");
   const documentInputRef = useRef(null);
@@ -192,9 +254,19 @@ export default function Home() {
         workspaceView,
         messageDraft,
         chatMessages,
+        activeModeId: activeMode.id,
       }),
     );
-  }, [chatMessages, composerType, linkDraft, messageDraft, textDraft, uploads, workspaceView]);
+  }, [
+    activeMode.id,
+    chatMessages,
+    composerType,
+    linkDraft,
+    messageDraft,
+    textDraft,
+    uploads,
+    workspaceView,
+  ]);
 
   const addUploads = (items) => {
     if (!items.length) {
@@ -299,6 +371,10 @@ export default function Home() {
       return;
     }
 
+    setActiveMode((current) => getNextMode(current.id));
+    setChatMessages([]);
+    setMessageDraft("");
+    setChatError("");
     setWorkspaceView("chat");
   };
 
@@ -404,7 +480,7 @@ export default function Home() {
 
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <div className={styles.brandMark}>вњ¦</div>
+          <div className={styles.brandMark}>✦</div>
           <div>
             <p className={styles.brandTitle}>Researcher</p>
           </div>
@@ -439,13 +515,13 @@ export default function Home() {
               <p className={styles.profileName}>Alex</p>
               <p className={styles.profileEmail}>alex@email.com</p>
             </div>
-            <span className={styles.chevron}>вЊ„</span>
+            <span className={styles.chevron}>⌄</span>
           </div>
 
           <button className={styles.modeButton}>
-            <span>вј</span>
+            <span>☼</span>
             <span>Light Mode</span>
-            <span className={styles.chevron}>вЊ„</span>
+            <span className={styles.chevron}>⌄</span>
           </button>
         </div>
       </aside>
@@ -467,12 +543,12 @@ export default function Home() {
             <section className={styles.heroCard}>
               <div className={styles.heroText}>
                 <p className={styles.emojiLead} aria-hidden="true">
-                  рџ‘‹
+                  👋
                 </p>
                 <h1 className={styles.heroTitle}>
                   What would you like
                   <br />
-                  to <span>research</span> today? рџљЂ
+                  to <span>research</span> today? 🚀
                 </h1>
                 <p className={styles.heroDescription}>
                   Send any text, PDF, image or link and I&apos;ll research it and chat
@@ -481,11 +557,11 @@ export default function Home() {
               </div>
 
               <div className={styles.heroIllustration}>
-                <div className={styles.sparkleOne}>вњ¦</div>
-                <div className={styles.sparkleTwo}>вњ¦</div>
-                <div className={styles.sparkleThree}>вњ¦</div>
+                <div className={styles.sparkleOne}>✦</div>
+                <div className={styles.sparkleTwo}>✦</div>
+                <div className={styles.sparkleThree}>✦</div>
                 <div className={styles.docGlow}>
-                  <div className={styles.docIcon}>вЊ•</div>
+                  <div className={styles.docIcon}>⌕</div>
                 </div>
               </div>
 
@@ -618,12 +694,14 @@ export default function Home() {
             <div className={styles.chatMain}>
               <div className={styles.chatSummary}>
                 <div>
-                  <p className={styles.chatEyebrow}>Session overview</p>
-                  <h2 className={styles.chatHeading}>Your materials are ready to study</h2>
+                  <p className={styles.chatEyebrow}>{activeMode.eyebrow}</p>
+                  <h2 className={styles.chatHeading}>{activeMode.heading}</h2>
+                  <p className={styles.chatLead}>{activeMode.subheading}</p>
                 </div>
                 <div className={styles.chatSummaryStats}>
                   <span>{uploads.length} sources</span>
-                  <span>Adaptive tutor mode</span>
+                  <span>New chat</span>
+                  <span>{activeMode.id}</span>
                 </div>
               </div>
 
@@ -653,17 +731,14 @@ export default function Home() {
                 ) : (
                   <div className={styles.blankChatState}>
                     <p className={styles.blankChatEyebrow}>Ready to begin</p>
-                    <h3>Ask your first question about the uploaded materials</h3>
-                    <p>
-                      Start with a summary request, a quiz, or ask for a simple
-                      explanation.
-                    </p>
+                    <h3>{activeMode.emptyTitle}</h3>
+                    <p>{activeMode.emptyText}</p>
                   </div>
                 )}
               </div>
 
               <div className={styles.promptRow}>
-                {starterPrompts.map((prompt) => (
+                {activeMode.prompts.map((prompt) => (
                   <button
                     key={prompt}
                     className={styles.promptChip}
@@ -686,7 +761,7 @@ export default function Home() {
                   <div className={styles.chatComposerMeta}>
                     <span>Short replies</span>
                     <span>Friendly tone</span>
-                    <span>Easy to follow</span>
+                    <span>Fresh chat each time</span>
                   </div>
                   <button className={styles.primaryActionSmall} onClick={handleSendMessage}>
                     {isSending ? "Thinking..." : "Send"}
@@ -718,7 +793,7 @@ export default function Home() {
                   <h3>Study tools</h3>
                 </div>
                 <div className={styles.railList}>
-                  {coachCards.map((card) => (
+                  {activeMode.cards.map((card) => (
                     <article key={card.title} className={styles.toolCard}>
                       <p className={styles.toolTitle}>{card.title}</p>
                       <p className={styles.toolText}>{card.text}</p>
@@ -732,9 +807,15 @@ export default function Home() {
                   <h3>Next actions</h3>
                 </div>
                 <div className={styles.actionList}>
-                  <button className={styles.railAction}>Generate quiz</button>
-                  <button className={styles.railAction}>Explain weak spots</button>
-                  <button className={styles.railAction}>Make flashcards</button>
+                  {activeMode.actions.map((action) => (
+                    <button
+                      key={action}
+                      className={styles.railAction}
+                      onClick={() => setMessageDraft(action)}
+                    >
+                      {action}
+                    </button>
+                  ))}
                 </div>
               </section>
             </aside>
