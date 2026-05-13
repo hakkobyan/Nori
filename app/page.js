@@ -143,6 +143,14 @@ const researchModes = [
   },
 ];
 
+const startResearchTemplates = [
+  "Can you research {files} for me please?",
+  "Can you look through {files} for me pls?",
+  "Can you research these for me: {files}?",
+  "Can you go over {files} for me please?",
+  "Can you check {files} and tell me what matters most pls?",
+];
+
 function formatBytes(size) {
   if (size < 1024 * 1024) {
     return `${(size / 1024).toFixed(1)} KB`;
@@ -187,6 +195,31 @@ function getNextMode(currentModeId) {
   const currentIndex = researchModes.findIndex((mode) => mode.id === currentModeId);
   const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % researchModes.length;
   return researchModes[nextIndex];
+}
+
+function listUploadNames(uploads) {
+  const names = uploads.map((item) => item.name);
+
+  if (names.length === 0) {
+    return "the uploaded files";
+  }
+
+  if (names.length === 1) {
+    return names[0];
+  }
+
+  if (names.length === 2) {
+    return `${names[0]} and ${names[1]}`;
+  }
+
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+function createStartResearchMessage(uploads) {
+  const template =
+    startResearchTemplates[Math.floor(Math.random() * startResearchTemplates.length)];
+
+  return template.replace("{files}", listUploadNames(uploads));
 }
 
 async function readJsonResponse(response) {
@@ -366,20 +399,8 @@ export default function Home() {
     setChatError("");
   };
 
-  const handleStartResearch = () => {
-    if (!uploads.length) {
-      return;
-    }
-
-    setActiveMode((current) => getNextMode(current.id));
-    setChatMessages([]);
-    setMessageDraft("");
-    setChatError("");
-    setWorkspaceView("chat");
-  };
-
-  const handleSendMessage = async () => {
-    const trimmed = messageDraft.trim();
+  const sendMessage = async (text, baseHistory = chatMessages) => {
+    const trimmed = text.trim();
 
     if (!trimmed || isSending) {
       return;
@@ -390,7 +411,7 @@ export default function Home() {
       role: "user",
       text: trimmed,
     };
-    const nextHistory = [...chatMessages, nextUserMessage];
+    const nextHistory = [...baseHistory, nextUserMessage];
 
     setChatMessages(nextHistory);
     setMessageDraft("");
@@ -431,6 +452,24 @@ export default function Home() {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleStartResearch = async () => {
+    if (!uploads.length || isSending) {
+      return;
+    }
+
+    setActiveMode((current) => getNextMode(current.id));
+    setChatMessages([]);
+    setMessageDraft("");
+    setChatError("");
+    setWorkspaceView("chat");
+
+    await sendMessage(createStartResearchMessage(uploads), []);
+  };
+
+  const handleSendMessage = async () => {
+    await sendMessage(messageDraft);
   };
 
   return (
@@ -667,8 +706,12 @@ export default function Home() {
                 ))}
               </div>
 
-              <button className={styles.startButton} onClick={handleStartResearch}>
-                Start Research
+              <button
+                className={styles.startButton}
+                onClick={handleStartResearch}
+                disabled={isSending}
+              >
+                {isSending ? "Researching..." : "Start Research"}
               </button>
             </section>
 
@@ -743,6 +786,7 @@ export default function Home() {
                     key={prompt}
                     className={styles.promptChip}
                     onClick={() => setMessageDraft(prompt)}
+                    disabled={isSending}
                   >
                     {prompt}
                   </button>
@@ -755,6 +799,7 @@ export default function Home() {
                   placeholder="Ask like you would text a smart friend..."
                   value={messageDraft}
                   onChange={(event) => setMessageDraft(event.target.value)}
+                  disabled={isSending}
                 />
                 {chatError ? <p className={styles.chatError}>{chatError}</p> : null}
                 <div className={styles.chatComposerFooter}>
@@ -763,7 +808,11 @@ export default function Home() {
                     <span>Friendly tone</span>
                     <span>Fresh chat each time</span>
                   </div>
-                  <button className={styles.primaryActionSmall} onClick={handleSendMessage}>
+                  <button
+                    className={styles.primaryActionSmall}
+                    onClick={handleSendMessage}
+                    disabled={isSending}
+                  >
                     {isSending ? "Thinking..." : "Send"}
                   </button>
                 </div>

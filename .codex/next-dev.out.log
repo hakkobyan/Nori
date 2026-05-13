@@ -36,3 +36,5 @@ Creating turbopack project { dir: 'D:\\nori', testMode: true }
 ✓ Compiled in 24ms
  GET / 200 in 169ms (next.js: 85ms, application-code: 84ms)
  GET / 200 in 41ms (next.js: 4ms, application-code: 37ms)
+✓ Compiled in 38ms
+ GET / 200 in 161ms (next.js: 93ms, application-code: 68ms)
